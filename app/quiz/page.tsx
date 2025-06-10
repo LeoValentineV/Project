@@ -633,10 +633,12 @@ export default function QuizPage() {
   const [showExplanation, setShowExplanation] = useState(false)
 
   const handleAnswerSelect = (answerId: string) => {
+    const currentQuestionId = questions[currentQuestion].id
     setSelectedAnswers({
       ...selectedAnswers,
-      [questions[currentQuestion].id]: answerId,
+      [currentQuestionId]: answerId,
     })
+    setShowExplanation(true)
   }
 
   const handleNextQuestion = () => {
@@ -651,7 +653,9 @@ export default function QuizPage() {
   const handlePreviousQuestion = () => {
     if (currentQuestion > 0) {
       setCurrentQuestion(currentQuestion - 1)
-      setShowExplanation(false)
+      // Проверяем, есть ли уже ответ на предыдущий вопрос
+      const prevQuestionId = questions[currentQuestion - 1].id
+      setShowExplanation(!!selectedAnswers[prevQuestionId])
     }
   }
 
@@ -736,9 +740,8 @@ export default function QuizPage() {
   }
 
   const currentQuestionData = questions[currentQuestion]
-  const selectedAnswer = selectedAnswers[currentQuestionData.id]
-  const isAnswerSelected = !!selectedAnswer
-  const isCorrect = selectedAnswer === currentQuestionData.correctAnswer
+  const selectedAnswer = selectedAnswers[currentQuestionData.id] || ""
+  const isAnswerSelected = !!selectedAnswers[currentQuestionData.id]
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-3xl">
@@ -767,7 +770,12 @@ export default function QuizPage() {
           <CardTitle className="text-xl">{currentQuestionData.question}</CardTitle>
         </CardHeader>
         <CardContent>
-          <RadioGroup value={selectedAnswer} onValueChange={handleAnswerSelect} className="space-y-3">
+          <RadioGroup
+            key={currentQuestionData.id}
+            value={selectedAnswer}
+            onValueChange={handleAnswerSelect}
+            className="space-y-3"
+          >
             {currentQuestionData.options.map((option) => (
               <div
                 key={option.id}
@@ -798,16 +806,9 @@ export default function QuizPage() {
           <Button variant="outline" onClick={handlePreviousQuestion} disabled={currentQuestion === 0}>
             Назад
           </Button>
-          <div className="space-x-2">
-            {!showExplanation && isAnswerSelected && (
-              <Button onClick={() => setShowExplanation(true)} variant="secondary">
-                Проверить
-              </Button>
-            )}
-            <Button onClick={handleNextQuestion} disabled={!isAnswerSelected}>
-              {currentQuestion < questions.length - 1 ? "Следующий вопрос" : "Завершить тест"}
-            </Button>
-          </div>
+          <Button onClick={handleNextQuestion} disabled={!isAnswerSelected}>
+            {currentQuestion < questions.length - 1 ? "Следующий вопрос" : "Завершить тест"}
+          </Button>
         </CardFooter>
       </Card>
     </div>
